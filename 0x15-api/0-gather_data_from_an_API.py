@@ -1,25 +1,25 @@
 #!/usr/bin/python3
-"""Retrieve employee information and TODO list from JSONPlaceholder API."""
+"""
+Using the provided REST API and the given ID, returns
+information about his/her TODO list progress.
+"""
 import requests
-import sys
+from sys import argv
 
 
 if __name__ == "__main__":
-    url = 'https://jsonplaceholder.typicode.com/'
+    user_id = int(argv[1])
+    baseUrl = "https://jsonplaceholder.typicode.com/"
+    todo_res = requests.get(f"{baseUrl}users/{user_id}/todos")
+    user_res = requests.get(f"{baseUrl}users/{user_id}")
 
-    user = '{}users/{}'.format(url, sys.argv[1])
-    response = requests.get(user)
-    json_o = response.json()
-    print("Employee {} is done with tasks".format(json_o.get('name')), end="")
+    if todo_res.status_code == 200 and user_res.status_code == 200:
+        todo, user = todo_res.json(), user_res.json()
+        completed_tasks = [task for task in todo if task.get('completed')]
+        tasks_len = sum(1 for task in todo if task['userId'] == user_id)
 
-    todos = '{}todos?userId={}'.format(url, sys.argv[1])
-    response = requests.get(todos)
-    tasks = response.json()
-    completed_task = []
-    for task in tasks:
-        if task.get('completed') is True:
-            completed_task.append(task)
+        print(f"Employee {user.get('name')} is done with tasks"
+              f"({len(completed_tasks)}/{tasks_len}):")
 
-    print("({}/{}):".format(len(completed_task), len(tasks)))
-    for task in completed_task:
-        print("\t {}".format(task.get("title")))
+        for task in completed_tasks:
+            print(f"\t {task['title']}")
