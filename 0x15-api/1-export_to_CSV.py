@@ -1,34 +1,34 @@
 #!/usr/bin/python3
-""" Script that uses JSONPlaceholder API to get information about employee """
+"""Exports to-do list information for a given employee ID to CSV format."""
+
 import csv
 import requests
 import sys
 
 
 if __name__ == "__main__":
-    base_url = 'https://jsonplaceholder.typicode.com/'
-
+    # Get the user ID from the command-line arguments provided to the script
     user_id = sys.argv[1]
-    user_url = '{}users/{}'.format(base_url, user_id)
-    user_response = requests.get(user_url)
-    user_data = user_response.json()
-    username = user_data.get('username')
 
-    todos_url = '{}todos?userId={}'.format(base_url, user_id)
-    todos_response = requests.get(todos_url)
-    todos_data = todos_response.json()
-    tasks = []
-    for todo in todos_data:
-        tasks.append([user_id,
-                      username,
-                      todo.get('completed'),
-                      todo.get('title')])
+    # Define the base URL for the JSON API
+    url = "https://jsonplaceholder.typicode.com/"
 
-    filename = '{}.csv'.format(user_id)
-    with open(filename, mode='w') as csv_file:
-        csv_writer = csv.writer(csv_file,
-                                delimiter=',',
-                                quotechar='"',
-                                quoting=csv.QUOTE_ALL)
-        for task in tasks:
-            csv_writer.writerow(task)
+    # Fetch user information from the API and
+    #   convert the response to a JSON object
+    user = requests.get(url + "users/{}".format(user_id)).json()
+
+    # Extract the username from the user data
+    username = user.get("username")
+
+    # Fetch the to-do list items associated with the
+    #   given user ID and convert the response to a JSON object
+    todos = requests.get(url + "todos", params={"userId": user_id}).json()
+
+    # Use list comprehension to iterate over the to-do list items
+    # Write each item's details (user ID, username, completion status,
+    #   and title) as a row in the CSV file
+    with open("{}.csv".format(user_id), "w", newline="") as csvfile:
+        writer = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
+        [writer.writerow(
+            [user_id, username, t.get("completed"), t.get("title")]
+         ) for t in todos]
